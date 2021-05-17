@@ -1,0 +1,134 @@
+/*
+There is going to be a party to celebrate the 80-th Anniversary of the Ural State University. 
+The University has a hierarchical structure of employees. 
+It means that the supervisor relation forms a tree rooted at the rector V. E. Tretyakov. 
+In order to make the party funny for every one, the rector does not want both an employee and his or her immediate supervisor to be present. 
+The personnel office has evaluated conviviality of each employee, so everyone has some number (rating) attached to him or her.
+Your task is to make a list of guests with the maximal possible sum of guests' conviviality ratings.
+有个公司要举行一场晚会。为了让到会的每个人不受他的直接上司约束而能玩得开心，公司领导决定：如果邀请了某个人，那么一定不会再邀请他的直接的上司，但该人的上司的上司，上司的上司的上司……都可以邀请。已知每个人最多有唯一的一个上司。
+已知公司的每个人参加晚会都能为晚会增添一些气氛，求一个邀请方案，使气氛值的和最大。
+Employees are numbered from 1 to N. A first line of input contains a number N. 1 <= N <= 6 000.
+Each of the subsequent N lines contains the conviviality rating of the corresponding employee. Conviviality rating is an integer number in a range from -128 to 127. After that go T lines that describe a supervisor relation tree. Each line of the tree specification has the form:
+L K
+It means that the K-th employee is an immediate supervisor of the L-th employee. Input is ended with the line
+0 0 <>
+注意包含多组输入
+第1行一个整数N表示公司的人数。
+接下一行N个整数。第i行的数表示第i个人的气氛值x（-128<=x<=127）
+接N-1下来每行两个整数L,K。表示第K个人是第L个人的上司。
+输入以两个0结尾
+*/
+/*
+  思路：
+  这题我用的是拓扑排序+dp，记录入度和出度找到最下面的点，在依次往上进行dp。
+  dp[i][0]代表i结点不去，dp[i][1]代表i结点去。
+  状态转移方程就是dp[i][0]+=max(dp[t][0],dp[t][1]) t为i的子节点。
+  dp[i][1]+=气氛值。
+  最后取dp[i][0],dp[i][1]中的最大值就行。
+*/
+```
+#include<iostream>
+#include<cstdio>
+#include<queue>
+#include<cstring>
+using namespace std;
+const int maxn=6e3+5;
+int fu[maxn],ru[maxn],happy[maxn],dp[maxn][2],N;
+int TP() {
+    queue<int>q;
+    int res=0;
+    for(int i=1; i<=N; i++) {
+        if(!ru[i])
+            q.push(i);
+    }
+    while(!q.empty()) {
+        int u=q.front();
+        q.pop();
+        dp[u][1]+=happy[u];
+        res=max(dp[u][1],max(dp[u][0],res));
+        int t=fu[u];
+        ru[t]--;
+        if(!ru[t]) {
+            q.push(t);
+        }
+        dp[t][0]+=max(dp[u][1],dp[u][0]);
+        if(dp[u][0]>=0)
+                dp[t][1]+=dp[u][0];
+    }
+return res;
+}
+int main() {
+    while(cin>>N) {
+        memset(fu,0,sizeof(0));
+        memset(ru,0,sizeof(0));
+        memset(dp,0,sizeof(dp));
+        for(int i=1; i<=N; i++) {
+            cin>>happy[i];
+        }
+        int a,b;
+        while(cin>>a>>b) {
+            if(a==0&&b==0)
+                break;
+            ru[b]++;
+            fu[a]=b;
+        }
+        cout<<TP()<<endl;
+    }
+}
+```
+
+/*
+ 给定一个字符串S，字符串S的长度为M(M≤2000)，字符串S所含有的字符的种类的数量为N(N≤26)，然后给定这N种字符Add与Delete的代价，求将S变为回文串的最小代价和。
+ 第一行：两个由空格分隔的整数 N 和 M
+
+第二行：这一行给出了恰好 M 个字符，表示初始状态下的ID字符串
+
+接下来的 N 行：每一行给出了由空格分隔的三部分。首先是一个字符，保证出现在了输入的字符串中。接下来是两个整数，表示你增添这个字符的代价，然后是删除这个字符的代价
+你只需要输出一行，且只输出一个整数。表示你将给定字符串变成回文串所需的最小代价。
+*/
+/*
+  这题是个非常好的区间dp题，先把每个字母的删除和增加代价用数组del，add存起来。
+  dp[i][j]代表把i到j这个区间变成回文串所需最少花费。
+  再套区间dp模板，s[j]==s[i]，dp[i][j]=dp[i+1][j-1];
+  s[j]!=s[i]是就有四种情况了。
+  1 删除i
+  2 在右边增加i
+  3 删除j
+  4 在左边增加j
+  所以  
+  dp[i][j]=min(dp[i][j],min(dp[i+1][j]+add[s[i]-'a'],dp[i+1][j]+del[s[i]-'a']));
+  dp[i][j]=min(dp[i][j],min(dp[i][j-1]+add[s[j]-'a'],dp[i][j-1]+del[s[j]-'a']));
+*/
+
+```
+#include<iostream>
+using namespace std;
+#define INF 0x3f3f3f3f
+int add[27],del[27],dp[2005][2005];
+int main() {
+    int N,M;
+    cin>>N>>M;
+    string s;
+    cin>>s;
+    while(N--) {
+        char t;
+        int a,b;
+        cin>>t>>a>>b;
+        add[t-'a']=a;
+        del[t-'a']=b;
+    }
+    for(int i=M-1; i>=0; i--) {
+        dp[i][i]=0;
+        for(int j=i+1; j<M; j++) {
+            dp[i][j]=INF;
+            if(s[j]==s[i]) {
+                dp[i][j]=dp[i+1][j-1];
+            } else {
+                dp[i][j]=min(dp[i][j],min(dp[i+1][j]+add[s[i]-'a'],dp[i+1][j]+del[s[i]-'a']));
+                dp[i][j]=min(dp[i][j],min(dp[i][j-1]+add[s[j]-'a'],dp[i][j-1]+del[s[j]-'a']));
+            }
+        }
+    }
+    cout<<dp[0][M-1]<<endl;
+}
+```
